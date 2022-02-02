@@ -1,0 +1,64 @@
+esphome:
+  name: pool-water-level
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "a964a48c4faae0b5068e56bd0dfecc5f"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Pool-Water-Level"
+    password: "0jvfm7lEnJI7"
+
+captive_portal:
+
+mqtt:
+  broker: 192.168.15.7
+  port: 1883
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  discovery: false
+  on_message:
+    - topic: pool-water-level/ota_mode
+      payload: 'ON'
+      then:
+        - deep_sleep.prevent: deep_sleep_1
+    - topic: pool-water-level/ota_mode
+      payload: 'OFF'
+      then:
+        - deep_sleep.enter: deep_sleep_1
+
+sensor:
+  - platform: adc
+    pin: VCC
+    id: "VCC"
+    internal: true
+    
+  - platform: template
+    name: "Pool Water Level Battery Meter"
+    unit_of_measurement: '%'
+    icon: "mdi:battery-outline"
+#    update_interval: 5s
+    lambda: |-
+      return (map(id(VCC).state*1000, 3423, 3526, 0, 100));
+
+
+# Need to connect D0 with RST
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 10s
+  sleep_duration: 30min

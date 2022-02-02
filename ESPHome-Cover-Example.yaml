@@ -1,0 +1,36 @@
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: INPUT_PULLUP
+    name: "Garage Door Sensor"
+    device_class: garage_door
+    id: sensor
+    internal: true    
+
+switch:
+  - platform: gpio
+    pin: GPIO12
+    id: relay
+    internal: true
+
+
+cover:
+  - platform: template
+    device_class: garage
+    name: "Garage Car Door"
+    id: garage_car_door
+    lambda: |-
+      if (id(sensor).state) {
+        return COVER_OPEN;
+      } else {
+        return COVER_CLOSED;
+      }
+    open_action:
+      - switch.turn_on: relay
+      - delay: 1.0s
+      - switch.turn_off: relay
+    close_action:
+      - switch.turn_on: relay
+      - delay: 1.0s
+      - switch.turn_off: relay
